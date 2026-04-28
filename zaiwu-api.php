@@ -27,12 +27,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // 优先读取 Discuz 自己的配置文件（推荐），避免重复写死密码
 $_cfg_file = __DIR__ . '/config/config_global.php';
 if (is_readable($_cfg_file)) {
-    @include $_cfg_file;
-    $DB_HOST   = $_config['db'][1]['dbhost']   ?? 'localhost';
-    $DB_NAME   = $_config['db'][1]['dbname']   ?? 'sql088261';
-    $DB_USER   = $_config['db'][1]['dbuser']   ?? 'sql088261';
-    $DB_PASS   = $_config['db'][1]['dbpw']     ?? 'LJjjNcrpR4';
-    $DB_PREFIX = $_config['db'][1]['tablepre'] ?? 'pre_';
+    $_config = [];
+    include $_cfg_file;  // 不加 @ 方便看加载错误
+    $DB_HOST   = $_config['db'][1]['dbhost']   ?? $_config['db'][0]['dbhost']   ?? 'localhost';
+    $DB_NAME   = $_config['db'][1]['dbname']   ?? $_config['db'][0]['dbname']   ?? 'sql088261';
+    $DB_USER   = $_config['db'][1]['dbuser']   ?? $_config['db'][0]['dbuser']   ?? 'sql088261';
+    $DB_PASS   = $_config['db'][1]['dbpw']     ?? $_config['db'][0]['dbpw']     ?? 'LJjjNcrpR4';
+    $DB_PREFIX = $_config['db'][1]['tablepre'] ?? $_config['db'][0]['tablepre'] ?? 'pre_';
 } else {
     // 兜底：直接写死（Discuz 配置文件不存在时使用）
     $DB_HOST   = 'localhost';
@@ -158,9 +159,9 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    // 生产环境不向前端暴露 DB 错误详情
+    // 临时调试：暴露真实错误信息（找到原因后删掉 $e->getMessage()，改回 'Database error'）
     echo json_encode(
-        ['data' => [], 'total' => 0, 'error' => 'Database error'],
+        ['data' => [], 'total' => 0, 'error' => $e->getMessage()],
         JSON_UNESCAPED_UNICODE
     );
 }
