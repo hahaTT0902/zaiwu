@@ -61,7 +61,7 @@ function strip_bbcode(string $text): string
     return trim($text);
 }
 
-// ── 提取正文中第一张图片 URL ──────────────────────────────────────────────
+// ── 提取正文中第一张外链图片 URL ─────────────────────────────────────────
 function extract_first_image(string $message): string
 {
     // BBCode: [img]https://...[/img] 或 [img=WxH]https://...[/img]
@@ -73,6 +73,15 @@ function extract_first_image(string $message): string
         return $m[1];
     }
     return '';
+}
+
+// ── 提取正文中第一个 Discuz 附件 ID（[attach]N[/attach]）────────────────
+function extract_first_attach_id(string $message): int
+{
+    if (preg_match('/\[attach(?:img)?\](\d+)\[\/attach(?:img)?\]/i', $message, $m)) {
+        return (int)$m[1];
+    }
+    return 0;
 }
 
 // ── 主逻辑 ────────────────────────────────────────────────────────────────
@@ -126,28 +135,54 @@ try {
     $rows = $stmt->fetchAll();
 
     $items = array_map(function (array $row): array {
-        $raw     = (string)($row['message'] ?? '');
-        $img     = extract_first_image($raw);
-        $body    = strip_bbcode($raw);
-        $len     = mb_strlen($body, 'UTF-8');
-        $summary = mb_substr($body, 0, 180, 'UTF-8') . ($len > 180 ? '…' : '');
+        $raw       = (string)($row['message'] ?? '');
+        $img       = extract_first_image($raw);
+        $attachId  = $img === '' ? extract_first_attach_id($raw) : 0;
+        $body      = strip_bbcode($raw);
+        $len       = mb_strlen($body, 'UTF-8');
+        $summary   = mb_substr($body, 0, 180, 'UTF-8') . ($len > 180 ? '…' : '');
 
         return [
-            'id'          => (string)$row['tid'],
-            'date'        => date('Y-m-d', (int)$row['dateline']),
-            'category_zh' => '载物',
-            'category_en' => 'Ink & Heritage',
-            'title_zh'    => (string)$row['subject'],
-            'title_en'    => (string)$row['subject'],
-            'summary_zh'  => $summary,
-            'summary_en'  => $summary,
-            'body_zh'     => $body,
-            'body_en'     => $body,
-            'image'       => $img,
-            'tags'        => [],
-            'author'      => (string)$row['author'],
+            'id'           => (string)$row['tid'],
+            'date'         => date('Y-m-d', (int)$row['dateline']),
+            'category_zh'  => '载物',
+            'category_en'  => 'Ink & Heritage',
+            'title_zh'     => (string)$row['subject'],
+            'title_en'     => (string)$row['subject'],
+            'summary_zh'   => $summary,
+            'summary_en'   => $summary,
+            'body_zh'      => $body,
+            'body_en'      => $body,
+            'image'        => $img,
+            '_attach_id'   => $attachId,  // 临时字段，后面批量解析
+            'tags'         => [],
+            'author'       => (string)$row['author'],
         ];
     }, $rows);
+
+    // ── 批量解析 Discuz 附件图片为完整 URL ───────────────────────────────
+    $attachIds = array_filter(array_column($items, '_attach_id'));
+    if (!empty($attachIds)) {
+        $placeholders = implode(',', array_fill(0, count($attachIds), '?'));
+        $attachSql  = "SELECT aid, attachment FROM {$DB_PREFIX}forum_attachment
+                        WHERE aid IN ($placeholders) AND isimage = 1";
+        $attachStmt = $pdo->prepare($attachSql);
+        $attachStmt->execute(array_values($attachIds));
+        $attachMap  = [];
+        foreach ($attachStmt->fetchAll() as $aRow) {
+            $attachMap[(int)$aRow['aid']] =
+                'https://zwwx.club/data/attachment/' . ltrim($aRow['attachment'], '/');
+        }
+        foreach ($items as &$item) {
+            if ($item['image'] === '' && isset($attachMap[$item['_attach_id']])) {
+                $item['image'] = $attachMap[$item['_attach_id']];
+            }
+        }
+        unset($item);
+    }
+    // 去掉临时字段
+    foreach ($items as &$item) { unset($item['_attach_id']); }
+    unset($item);
 
     echo json_encode(
         ['data' => $items, 'total' => count($items), 'error' => null],
