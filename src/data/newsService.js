@@ -1,19 +1,15 @@
 import { hasSupabaseConfig, supabase } from "../lib/supabase";
 
 // ── 统一入口：优先使用 PHP 代理 API，否则回退到 Supabase ─────────────────
+const DEFAULT_API_URL = "https://zwwx.club/zaiwu-api.php";
+
 export async function fetchNews() {
-  const apiUrl = import.meta.env.VITE_NEWS_API_URL;
-  if (apiUrl) {
-    const res = await fetch(apiUrl);
-    if (!res.ok) throw new Error(`新闻 API 请求失败 (${res.status})，请检查 zaiwu-api.php 是否已上传到服务器`);
-    const json = await res.json();
-    if (json.error) throw new Error(json.error);
-    return (json.data || []).map(normalizeNewsRow);
-  }
-  if (hasSupabaseConfig) {
-    return fetchNewsFromDatabase();
-  }
-  throw new Error("请在 .env.local 中设置 VITE_NEWS_API_URL=https://你的域名/zaiwu-api.php");
+  const apiUrl = import.meta.env.VITE_NEWS_API_URL || DEFAULT_API_URL;
+  const res = await fetch(apiUrl);
+  if (!res.ok) throw new Error(`新闻 API 请求失败 (${res.status})`);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error);
+  return (json.data || []).map(normalizeNewsRow);
 }
 
 function fromMaybeObject(v, key) {
