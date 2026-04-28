@@ -115,7 +115,6 @@ try {
         LEFT JOIN {$DB_PREFIX}forum_post AS p
                ON p.tid = t.tid AND p.`first` = 1
         WHERE t.fid           = :fid
-          AND t.visible       = 1
           AND t.displayorder >= 0
           AND t.isgroup       = 0
         ORDER BY t.dateline DESC
