@@ -118,7 +118,7 @@ const T = {
     footer: {
       slogan: "让中文从纸面走向社区，让文化从兴趣变成行动。",
       rights: "© 2025 载物 · Ink & Heritage",
-      links: [["ZWWX.CLUB","https://zwwx.club"],["关于我们","#about"],["招新","#recruitment"],["联系","#join-us"]],
+      links: [["ZWWX.CLUB","https://zwwx.club"],["ellan.site","https://ellan.site"],["关于我们","#about"],["招新","#recruitment"],["联系","#join-us"]],
     },
   },
   en: {
@@ -221,7 +221,7 @@ const T = {
     footer: {
       slogan: "From words to communities, from heritage to action.",
       rights: "© 2025 Ink & Heritage · 载物",
-      links: [["ZWWX.CLUB","https://zwwx.club"],["About","#about"],["Recruitment","#recruitment"],["Contact","#join-us"]],
+      links: [["ZWWX.CLUB","https://zwwx.club"],["ellan.site","https://ellan.site"],["About","#about"],["Recruitment","#recruitment"],["Contact","#join-us"]],
     },
   },
 };
