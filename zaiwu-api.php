@@ -10,7 +10,7 @@
  *
  * 接口地址示例: https://zwwx.club/zaiwu-api.php
  * ==========================================================
- 1*/
+ */
 
 // ── CORS（允许 React 前端跨域读取） ────────────────────────────────────────
 header('Access-Control-Allow-Origin: *');
@@ -88,12 +88,11 @@ try {
         ]
     );
 
-    // ── ?action=count：只返回主题帖数量（不含回复）──────────────────────
+    // ── ?action=count：返回全站主题帖总数（不含回复）──────────────────────
     if (($_GET['action'] ?? '') === 'count') {
         $countSql = "SELECT COUNT(*) FROM {$DB_PREFIX}forum_thread
-                     WHERE fid = :fid AND displayorder >= 0 AND isgroup = 0";
+                     WHERE displayorder >= 0 AND isgroup = 0";
         $countStmt = $pdo->prepare($countSql);
-        $countStmt->bindValue(':fid', FID_ZAIWU, PDO::PARAM_INT);
         $countStmt->execute();
         $count = (int)$countStmt->fetchColumn();
         echo json_encode(['count' => $count, 'error' => null], JSON_UNESCAPED_UNICODE);
