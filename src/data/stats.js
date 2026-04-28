@@ -21,3 +21,7 @@ export const STATS_CONFIG = {
   articlesCount:   0,   // 发布文章数
   productsCount:   0,   // 义卖产品数
 };
+
+export function loadStats() {
+  return { ...STATS_CONFIG, rates: { ...STATS_CONFIG.rates } };
+}

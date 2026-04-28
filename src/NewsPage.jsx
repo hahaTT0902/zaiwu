@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Calendar, Tag } from "lucide-react";
-import { loadNews } from "./AdminPage";
-
-const NEWS = loadNews();
+import { fetchNews } from "./data/newsService";
 
 // ── 阅读进度条 ─────────────────────────────────────────────────────────────
 function ReadingProgress({ targetRef }) {
@@ -202,12 +200,14 @@ function ArticleDetail({ article, lang, onBack }) {
 }
 
 // ── 新闻列表页 ─────────────────────────────────────────────────────────────
-function NewsList({ lang, onBack, onSelect }) {
+function NewsList({ lang, onBack, onSelect, news, isLoading, error, onRetry }) {
   const [filter, setFilter] = useState("all");
 
-  const allCategories = Array.from(new Set(NEWS.map((n) => n.category[lang])));
+  const allCategories = Array.from(
+    new Set(news.map((n) => n.category[lang]).filter(Boolean))
+  );
   const filtered =
-    filter === "all" ? NEWS : NEWS.filter((n) => n.category[lang] === filter);
+    filter === "all" ? news : news.filter((n) => n.category[lang] === filter);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -245,32 +245,34 @@ function NewsList({ lang, onBack, onSelect }) {
         </p>
       </div>
 
-      {/* Category filter */}
-      <div className="flex flex-wrap gap-2 mb-10">
-        {["all", ...allCategories].map((cat) => {
-          const label =
-            cat === "all" ? (lang === "zh" ? "全部" : "All") : cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
-              style={{
-                background: filter === cat ? "var(--accent)" : "var(--surface)",
-                color: filter === cat ? "#fff" : "var(--text2)",
-                border: "1px solid var(--border)",
-              }}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      {!isLoading && !error && (
+        <>
+          {/* Category filter */}
+          <div className="flex flex-wrap gap-2 mb-10">
+            {["all", ...allCategories].map((cat) => {
+              const label =
+                cat === "all" ? (lang === "zh" ? "全部" : "All") : cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setFilter(cat)}
+                  className="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200"
+                  style={{
+                    background: filter === cat ? "var(--accent)" : "var(--surface)",
+                    color: filter === cat ? "#fff" : "var(--text2)",
+                    border: "1px solid var(--border)",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <AnimatePresence mode="popLayout">
-          {filtered.map((article, i) => (
+          {/* Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filtered.map((article, i) => (
             <motion.article
               key={article.id}
               layout
@@ -343,17 +345,75 @@ function NewsList({ lang, onBack, onSelect }) {
                 </div>
               </div>
             </motion.article>
-          ))}
-        </AnimatePresence>
-      </div>
+              ))}
+            </AnimatePresence>
+          </div>
+        </>
+      )}
+
+      {isLoading && (
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <p className="text-sm" style={{ color: "var(--text2)" }}>
+            {lang === "zh" ? "正在从数据库加载新闻..." : "Loading news from database..."}
+          </p>
+        </div>
+      )}
+
+      {!isLoading && error && (
+        <div className="glass-card rounded-2xl p-8 text-center space-y-3">
+          <p className="text-sm" style={{ color: "#ef4444" }}>
+            {lang === "zh" ? "数据库连接失败" : "Failed to load from database"}
+          </p>
+          <p className="text-xs" style={{ color: "var(--text3)" }}>
+            {String(error)}
+          </p>
+          <button
+            onClick={onRetry}
+            className="btn-primary px-5 py-2 rounded-xl text-sm font-semibold"
+          >
+            {lang === "zh" ? "重试" : "Retry"}
+          </button>
+        </div>
+      )}
+
+      {!isLoading && !error && filtered.length === 0 && (
+        <div className="glass-card rounded-2xl p-8 text-center">
+          <p className="text-sm" style={{ color: "var(--text2)" }}>
+            {lang === "zh" ? "暂无文章" : "No posts yet"}
+          </p>
+        </div>
+      )}
     </motion.div>
   );
 }
 
 // ── 主出口：列表 / 详情切换 ───────────────────────────────────────────────
 export default function NewsRoot({ lang, onGoHome }) {
+  const [news, setNews] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
   const [articleId, setArticleId] = useState(null);
-  const article = articleId ? NEWS.find((n) => n.id === articleId) : null;
+  const article = articleId ? news.find((n) => n.id === articleId) : null;
+
+  const loadFromDb = async () => {
+    setIsLoading(true);
+    setError("");
+    try {
+      const data = await fetchNews();
+      setNews(data);
+    } catch (err) {
+      setError(err?.message || "Unknown error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      loadFromDb();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
@@ -370,6 +430,10 @@ export default function NewsRoot({ lang, onGoHome }) {
           lang={lang}
           onBack={onGoHome}
           onSelect={setArticleId}
+          news={news}
+          isLoading={isLoading}
+          error={error}
+          onRetry={loadFromDb}
         />
       )}
     </AnimatePresence>

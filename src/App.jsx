@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import NewsRoot from "./NewsPage";
-import AdminPage, { loadStats } from "./AdminPage";
+import { loadStats } from "./data/stats";
 import {
   BookOpen, PenTool, HeartHandshake, Globe2, Sparkles, Users,
   Newspaper, Video, Code2, CalendarDays, Gift, HandHeart,
@@ -1426,18 +1426,15 @@ export default function App() {
   const [lang, setLang] = useState(detectLang);
   const [dark, setDark] = useDarkMode();
   const [page, setPage] = useState(() => {
-    if (window.location.pathname === "/admin" || window.location.hash === "#admin") return "admin";
     if (window.location.pathname === "/donate" || window.location.hash === "#donate") return "donate";
     return "home";
-  }); // "home" | "news" | "admin" | "donate"
+  }); // "home" | "news" | "donate"
   const t = T[lang];
 
   return (
     <div style={{ minHeight:"100vh" }}>
       <Navbar lang={lang} setLang={setLang} t={t} dark={dark} setDark={setDark} page={page} setPage={setPage} />
-      {page === "admin" ? (
-        <AdminPage onExit={() => setPage("home")} />
-      ) : page === "donate" ? (
+      {page === "donate" ? (
         <DonatePage lang={lang} onGoHome={() => setPage("home")} />
       ) : page === "news" ? (
         <NewsRoot lang={lang} onGoHome={() => setPage("home")} />
