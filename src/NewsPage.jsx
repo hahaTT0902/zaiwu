@@ -131,14 +131,17 @@ function ArticleDetail({ article, lang, onBack }) {
         </button>
 
         {/* Cover */}
-        <div className="rounded-3xl overflow-hidden mb-8 h-56 md:h-80">
-          <img
-            src={article.image}
-            alt={article.title[lang]}
-            className="w-full h-full object-cover"
-            style={{ opacity: 0.85 }}
-          />
-        </div>
+        {article.image && (
+          <div className="rounded-3xl overflow-hidden mb-8 h-56 md:h-80">
+            <img
+              src={article.image}
+              alt={article.title[lang]}
+              className="w-full h-full object-cover"
+              style={{ opacity: 0.85 }}
+              onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+            />
+          </div>
+        )}
 
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-2.5 mb-5">
@@ -286,13 +289,25 @@ function NewsList({ lang, onBack, onSelect, news, isLoading, error, onRetry }) {
               whileHover={{ y: -4 }}
             >
               {/* Thumb */}
-              <div className="h-44 overflow-hidden">
-                <img
-                  src={article.image}
-                  alt={article.title[lang]}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  style={{ opacity: 0.82 }}
-                />
+              <div className="h-44 overflow-hidden relative">
+                {article.image ? (
+                  <img
+                    src={article.image}
+                    alt={article.title[lang]}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    style={{ opacity: 0.82 }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextSibling.style.display = 'flex'; }}
+                  />
+                ) : null}
+                <div
+                  className="w-full h-full items-center justify-center text-3xl"
+                  style={{
+                    display: article.image ? 'none' : 'flex',
+                    background: 'linear-gradient(135deg, var(--surface2) 0%, var(--surface) 100%)'
+                  }}
+                >
+                  📜
+                </div>
               </div>
 
               {/* Content */}
