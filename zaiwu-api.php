@@ -88,6 +88,18 @@ try {
         ]
     );
 
+    // ── ?action=count：只返回主题帖数量（不含回复）──────────────────────
+    if (($_GET['action'] ?? '') === 'count') {
+        $countSql = "SELECT COUNT(*) FROM {$DB_PREFIX}forum_thread
+                     WHERE fid = :fid AND displayorder >= 0 AND isgroup = 0";
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->bindValue(':fid', FID_ZAIWU, PDO::PARAM_INT);
+        $countStmt->execute();
+        $count = (int)$countStmt->fetchColumn();
+        echo json_encode(['count' => $count, 'error' => null], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     // 只读 SELECT：拉取载物版块最新帖子及其正文（first=1 的楼层）
     $sql = "
         SELECT

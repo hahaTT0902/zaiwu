@@ -533,7 +533,20 @@ function CountUpNumber({ target, duration = 2500, delay = 0, decimals = 0, class
 // ── Hero ───────────────────────────────────────────────────────────────────
 function Hero({ lang, t }) {
   const [currency, setCurrency] = useState("CNY");
-  const [stats] = useState(() => loadStats());
+  const [stats, setStats] = useState(() => loadStats());
+
+  // 实时拉取 ZWWX 帖子总数（不含回复）
+  useEffect(() => {
+    const API_URL = import.meta.env.VITE_NEWS_API_URL || "https://zwwx.club/zaiwu-api.php";
+    fetch(`${API_URL}?action=count`)
+      .then(r => r.json())
+      .then(json => {
+        if (typeof json.count === 'number') {
+          setStats(prev => ({ ...prev, articlesCount: json.count }));
+        }
+      })
+      .catch(() => {}); // 静默失败，保留默认值 0
+  }, []);
 
   // 实时计时器：每秒刷新
   const calcElapsed = () => {
