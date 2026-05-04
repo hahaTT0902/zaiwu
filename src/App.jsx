@@ -10,6 +10,9 @@ import {
   ChevronDown, ChevronUp, Quote, Sun, Moon
 } from "lucide-react";
 
+// ── Feature flags ──────────────────────────────────────────────────────────
+const SHOW_DONATE = false;
+
 // ── Detect browser language ────────────────────────────────────────────────
 function detectLang() {
   const nav = (navigator.language || navigator.userLanguage || "zh").toLowerCase();
@@ -441,11 +444,13 @@ function Navbar({ lang, setLang, t, dark, setDark, page, setPage }) {
             style={{ color: page === "news" ? "var(--accent)" : "var(--text2)" }}>
             {t.nav.news}
           </button>
+          {SHOW_DONATE && (
           <button
             onClick={() => { setPage("donate"); setOpen(false); }}
             className="btn-primary px-4 py-1.5 rounded-xl text-sm font-bold flex items-center gap-1.5">
             ❤️ {t.nav.donate}
           </button>
+          )}
         </nav>
 
         <div className="flex items-center gap-3">
@@ -490,11 +495,13 @@ function Navbar({ lang, setLang, t, dark, setDark, page, setPage }) {
               style={{ color: page === "news" ? "var(--accent)" : "var(--text2)" }}>
               {t.nav.news}
             </button>
+            {SHOW_DONATE && (
             <button
               onClick={() => { setPage("donate"); setOpen(false); }}
               className="btn-primary py-2 px-3 rounded-xl text-sm font-bold text-left flex items-center gap-1.5">
               ❤️ {t.nav.donate}
             </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -665,6 +672,7 @@ function Hero({ lang, t }) {
             </div>
 
             {/* 累计捐助 */}
+            {SHOW_DONATE && (
             <div className="glass-card rounded-3xl px-5 py-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="section-label">{lang==="zh" ? "累计捐助" : "Total Raised"}</p>
@@ -696,6 +704,7 @@ function Hero({ lang, t }) {
                 {lang==="zh" ? "文创义卖 · 在线捐赠" : "Charity Sales · Online Donation"}
               </p>
             </div>
+            )}
 
             {/* 2×2 数字格 */}
             <div className="grid grid-cols-2 gap-3">
@@ -754,6 +763,7 @@ function Hero({ lang, t }) {
           </div>
 
           {/* Donation + currency switcher */}
+          {SHOW_DONATE && (
           <div className="glass-card rounded-3xl p-6">
             <div className="flex items-center justify-between mb-4">
               <p className="section-label">{lang==="zh" ? "累计捐助" : "Total Raised"}</p>
@@ -792,6 +802,7 @@ function Hero({ lang, t }) {
               {lang==="zh" ? "文创义卖 · 在线捐赠" : "Charity Sales · Online Donation"}
             </p>
           </div>
+          )}
 
           {/* 2×2 stats grid */}
           <div className="grid grid-cols-2 gap-4">
